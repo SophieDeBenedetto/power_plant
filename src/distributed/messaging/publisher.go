@@ -1,8 +1,6 @@
 package messaging
 
 import (
-	"log"
-
 	"github.com/streadway/amqp"
 )
 
@@ -36,10 +34,7 @@ func (p *Publisher) Message(contentType string, body []byte) amqp.Publishing {
 
 // Publish publishes a message
 func (p *Publisher) Publish(msg amqp.Publishing) {
-	log.Printf("Publishing to: %v", p.Queue.Name)
-	log.Printf("Publishing msg: %v", msg)
-	err := p.Channel.Publish("", p.Queue.Name, false, false, msg)
-	FailOnError(err, "Failed to publish to queue")
+	p.Channel.Publish("", p.Queue.Name, false, false, msg)
 }
 
 // Stop closes the channel connection
