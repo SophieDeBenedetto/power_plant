@@ -21,24 +21,39 @@ var max = flag.Float64("max", 5.0, "maximum value for generated readings")
 var min = flag.Float64("min", 1.0, "minimum value for generated readings")
 var stepSize = flag.Float64("step", 0.1, "maximum allowage change per measurement")
 
+// SensorList the name of the sensor list queue
+var SensorList = "sensor_list"
+
 func main() {
 	flag.Parse()
 
+	rabbitServer := messaging.NewRabbitMQServer("guest", "guest", "localhost:5672")
+	rabbitServer.Connect()
+	defer rabbitServer.Close()
+
+	publishNewSensorQueue(rabbitServer)
+
+	sensorPublisher := getPublisher(rabbitServer, *name)
+	defer sensorPublisher.Stop()
+
 	pace := setPace(freq)
 	buf, enc := setUpBuffer()
-
-	rabbitServer, publisher := getPublisher(*name)
-	defer publisher.Stop()
-	defer rabbitServer.Close()
 
 	var value float64
 	for range pace {
 		value = calculations.Calculate(max, min, stepSize, value)
 		writeMessageToBuffer(value, buf, enc)
-		amqpMsg := publisher.Message("text/plain", buf.Bytes())
-		publisher.Publish(amqpMsg)
+		amqpMsg := sensorPublisher.Message("text/plain", buf.Bytes())
+		sensorPublisher.Publish(amqpMsg)
 		log.Printf("Reading sent. Value: %v", value)
 	}
+}
+
+func publishNewSensorQueue(rabbitServer *messaging.Server) {
+	publisher := getPublisher(rabbitServer, SensorList)
+	defer publisher.Stop()
+	msg := publisher.Message("text/plan", []byte(*name))
+	publisher.Publish(msg)
 }
 
 func setPace(freq *uint) <-chan time.Time {
@@ -46,11 +61,8 @@ func setPace(freq *uint) <-chan time.Time {
 	return time.Tick(dur)
 }
 
-func getPublisher(queue string) (*messaging.Server, *messaging.Publisher) {
-	rabbitServer := messaging.NewRabbitMQServer("guest", "guest", "localhost:5672")
-	rabbitServer.Connect()
-
-	return rabbitServer, messaging.NewPublisher(rabbitServer, queue)
+func getPublisher(rabbitServer *messaging.Server, queue string) *messaging.Publisher {
+	return messaging.NewPublisher(rabbitServer, queue)
 }
 
 func setUpBuffer() (*bytes.Buffer, *gob.Encoder) {
