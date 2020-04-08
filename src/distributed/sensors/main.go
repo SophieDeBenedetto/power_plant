@@ -33,7 +33,7 @@ func main() {
 
 	publishNewSensorQueue(rabbitServer)
 
-	sensorPublisher := getPublisher(rabbitServer, *name)
+	sensorPublisher := messaging.NewPublisher(rabbitServer)
 	defer sensorPublisher.Stop()
 
 	pace := setPace(freq)
@@ -50,7 +50,7 @@ func main() {
 }
 
 func publishNewSensorQueue(rabbitServer *messaging.Server) {
-	publisher := getPublisher(rabbitServer, SensorList)
+	publisher := messaging.NewPublisherWithQueue(rabbitServer, SensorList)
 	defer publisher.Stop()
 	msg := publisher.Message("text/plan", []byte(*name))
 	publisher.Publish(msg)
@@ -59,10 +59,6 @@ func publishNewSensorQueue(rabbitServer *messaging.Server) {
 func setPace(freq *uint) <-chan time.Time {
 	dur, _ := time.ParseDuration(strconv.Itoa(1000/int(*freq)) + "ms")
 	return time.Tick(dur)
-}
-
-func getPublisher(rabbitServer *messaging.Server, queue string) *messaging.Publisher {
-	return messaging.NewPublisher(rabbitServer, queue)
 }
 
 func setUpBuffer() (*bytes.Buffer, *gob.Encoder) {
