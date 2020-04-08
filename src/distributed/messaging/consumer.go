@@ -1,8 +1,6 @@
 package messaging
 
 import (
-	"log"
-
 	"github.com/streadway/amqp"
 )
 
@@ -26,13 +24,19 @@ func NewConsumer(s *Server, queue string) *Consumer {
 	}
 }
 
+// QueueBind binds the queue to an exchange
+func (c *Consumer) QueueBind(key string, exchange string) {
+	err := c.Channel.QueueBind(c.Queue.Name, key, exchange, false, nil)
+	if err != nil {
+		FailOnError(err, "Failed to bind queue to exchange")
+	}
+}
+
 // Consume starts listening for messages from a queue
-func (c *Consumer) Consume() {
+func (c *Consumer) Consume() <-chan amqp.Delivery {
 	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
 	FailOnError(err, "Failed to start consumer")
-	for msg := range msgs {
-		log.Printf("Received message with body: %v", string(msg.Body))
-	}
+	return msgs
 }
 
 // Stop closes the channel connection

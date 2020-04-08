@@ -36,7 +36,7 @@ func NewPublisher(s *Server) *Publisher {
 		Server:       s,
 		Channel:      ch,
 		QueueName:    "",
-		ExchangeName: "amqp.fanout",
+		ExchangeName: "amq.fanout",
 	}
 }
 

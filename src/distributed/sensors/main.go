@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"flag"
+	"fmt"
 	"log"
 
 	// "math/rand"
@@ -52,6 +53,7 @@ func main() {
 func publishNewSensorQueue(rabbitServer *messaging.Server) {
 	publisher := messaging.NewPublisherWithQueue(rabbitServer, SensorList)
 	defer publisher.Stop()
+	fmt.Print("Publishg message: ", *name)
 	msg := publisher.Message("text/plan", []byte(*name))
 	publisher.Publish(msg)
 }
