@@ -39,13 +39,6 @@ func (c *Consumer) QueueBind(key string, exchange string) {
 	}
 }
 
-// // Consume starts listening for messages from a queue
-// func (c *Consumer) Consume() <-chan amqp.Delivery {
-// 	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
-// 	FailOnError(err, "Failed to start consumer")
-// 	return msgs
-// }
-
 // Consume starts listening for messages from a queue
 func (c *Consumer) Consume() {
 	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
