@@ -4,15 +4,21 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// HandlerInterface the handler interface
+type HandlerInterface interface {
+	Handle(amqp.Delivery)
+}
+
 // Consumer receives messages from the queue
 type Consumer struct {
 	Server  *Server
 	Channel *amqp.Channel
 	Queue   amqp.Queue
+	Handler HandlerInterface
 }
 
 // NewConsumer returns a consumer struct
-func NewConsumer(s *Server, queue string) *Consumer {
+func NewConsumer(s *Server, queue string, handler HandlerInterface) *Consumer {
 	ch, err := s.Conn.Channel()
 	FailOnError(err, "Failed to open channel")
 	q, err := ch.QueueDeclare(queue, false, false, false, false, nil)
@@ -21,6 +27,7 @@ func NewConsumer(s *Server, queue string) *Consumer {
 		Server:  s,
 		Queue:   q,
 		Channel: ch,
+		Handler: handler,
 	}
 }
 
@@ -32,11 +39,20 @@ func (c *Consumer) QueueBind(key string, exchange string) {
 	}
 }
 
+// // Consume starts listening for messages from a queue
+// func (c *Consumer) Consume() <-chan amqp.Delivery {
+// 	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
+// 	FailOnError(err, "Failed to start consumer")
+// 	return msgs
+// }
+
 // Consume starts listening for messages from a queue
-func (c *Consumer) Consume() <-chan amqp.Delivery {
+func (c *Consumer) Consume() {
 	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
 	FailOnError(err, "Failed to start consumer")
-	return msgs
+	for msg := range msgs {
+		c.Handler.Handle(msg)
+	}
 }
 
 // Stop closes the channel connection

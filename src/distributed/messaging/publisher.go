@@ -29,14 +29,14 @@ func NewPublisherWithQueue(s *Server, queue string) *Publisher {
 }
 
 // NewPublisher returns a publisher struct with the server and queue
-func NewPublisher(s *Server) *Publisher {
+func NewPublisherWithExchange(s *Server, exchange string) *Publisher {
 	ch, err := s.Conn.Channel()
 	FailOnError(err, "Failed to open channel")
 	return &Publisher{
 		Server:       s,
 		Channel:      ch,
 		QueueName:    "",
-		ExchangeName: "amq.fanout",
+		ExchangeName: exchange,
 	}
 }
 
