@@ -9,21 +9,23 @@ import (
 type Coordinator struct {
 	Server         *messaging.Server
 	SensorRegistry map[string]*messaging.Consumer
+	EventRaiser    EventRaiser
 }
 
 // New returns a new coordinator struct
-func New(server *messaging.Server) *Coordinator {
+func New(server *messaging.Server, er EventRaiser) *Coordinator {
 	return &Coordinator{
 		Server:         server,
 		SensorRegistry: make(map[string]*messaging.Consumer),
+		EventRaiser:    er,
 	}
 }
 
 // Run runs the coordinator
 func (c *Coordinator) Run() {
 	handler := &SensorListMessageHandler{
-		coord:           c,
-		eventaggregator: NewEventAggregator(),
+		coord:       c,
+		eventRaiser: c.EventRaiser,
 	}
 	newSensorConsumer := messaging.NewConsumer(c.Server, sensors.SensorList, true, handler)
 	newSensorConsumer.Consume()

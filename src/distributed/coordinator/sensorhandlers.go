@@ -12,13 +12,13 @@ import (
 
 // SensorListMessageHandler knows how to decode messages
 type SensorListMessageHandler struct {
-	coord           *Coordinator
-	eventaggregator *EventAggregator
+	coord       *Coordinator
+	eventRaiser EventRaiser
 }
 
 // SensorDataHandler knows how to decode messages
 type SensorDataHandler struct {
-	eventaggregator *EventAggregator
+	eventRaiser EventRaiser
 }
 
 // Handle decodes messages
@@ -26,9 +26,9 @@ func (h *SensorListMessageHandler) Handle(msg amqp.Delivery) {
 	sensorQueueName := string(msg.Body)
 	fmt.Println("Received message on sensor_list queue")
 	if !h.coord.QueueIsRegistered(sensorQueueName) {
-		h.eventaggregator.PublishEvent("DataSourceDiscovered", sensorQueueName)
+		h.eventRaiser.PublishEvent("DataSourceDiscovered", sensorQueueName)
 		sensorDataHandler := &SensorDataHandler{
-			eventaggregator: NewEventAggregator(),
+			eventRaiser: h.coord.EventRaiser,
 		}
 		sensorConsumer := messaging.NewConsumer(h.coord.Server, sensorQueueName, false, sensorDataHandler)
 		sensorConsumer.QueueBind("", "amq.fanout")
@@ -54,5 +54,5 @@ func (h *SensorDataHandler) Handle(msg amqp.Delivery) {
 		Value:     sensorData.Value,
 		Timestamp: sensorData.Timestamp,
 	}
-	h.eventaggregator.PublishEvent("MessageReceived_"+msg.RoutingKey, eventData)
+	h.eventRaiser.PublishEvent("MessageReceived_"+sensorData.Name, eventData)
 }

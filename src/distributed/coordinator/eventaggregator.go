@@ -5,6 +5,7 @@ import "time"
 // EventRaiser raises events
 type EventRaiser interface {
 	AddListener(name string, f func(interface{}))
+	PublishEvent(name string, event interface{})
 }
 
 // EventAggregator knows to to respond to events
