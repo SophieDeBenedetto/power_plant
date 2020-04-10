@@ -1,6 +1,8 @@
 package messaging
 
 import (
+	"fmt"
+
 	"github.com/streadway/amqp"
 )
 
@@ -18,10 +20,11 @@ type Consumer struct {
 }
 
 // NewConsumer returns a consumer struct
-func NewConsumer(s *Server, queue string, handler HandlerInterface) *Consumer {
+func NewConsumer(s *Server, queue string, autoDelete bool, handler HandlerInterface) *Consumer {
 	ch, err := s.Conn.Channel()
 	FailOnError(err, "Failed to open channel")
-	q, err := ch.QueueDeclare(queue, false, false, false, false, nil)
+	fmt.Println("Creating queue with name: ", queue)
+	q, err := ch.QueueDeclare(queue, false, autoDelete, false, false, nil)
 	FailOnError(err, "Failed to declare and connect to queue")
 	return &Consumer{
 		Server:  s,

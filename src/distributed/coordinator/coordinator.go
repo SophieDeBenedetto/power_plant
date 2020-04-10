@@ -21,8 +21,11 @@ func New(server *messaging.Server) *Coordinator {
 
 // Run runs the coordinator
 func (c *Coordinator) Run() {
-	handler := &SensorListMessageHandler{coord: c}
-	newSensorConsumer := messaging.NewConsumer(c.Server, sensors.SensorList, handler)
+	handler := &SensorListMessageHandler{
+		coord:           c,
+		eventaggregator: NewEventAggregator(),
+	}
+	newSensorConsumer := messaging.NewConsumer(c.Server, sensors.SensorList, true, handler)
 	newSensorConsumer.Consume()
 }
 

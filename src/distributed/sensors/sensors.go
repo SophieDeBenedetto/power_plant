@@ -27,6 +27,7 @@ type SensorManager struct {
 // New creates a new sensor manager
 func New(server *messaging.Server, name string, max *float64, min *float64, stepSize *float64, freq uint) *SensorManager {
 	return &SensorManager{
+		Name:       name,
 		Server:     server,
 		Calculator: calculations.New(max, min, stepSize),
 		Frequency:  freq,
@@ -35,9 +36,9 @@ func New(server *messaging.Server, name string, max *float64, min *float64, step
 
 // PublishNewSensorQueue publishes the 'new sensor online' message
 func (manager *SensorManager) PublishNewSensorQueue() {
-	publisher := messaging.NewPublisherWithQueue(manager.Server, SensorList)
+	publisher := messaging.NewPublisherWithQueue(manager.Server, SensorList, true)
 	defer publisher.Stop()
-	fmt.Print("Publishg message: ", manager.Name)
+	fmt.Println("Publishing message: ", manager.Name)
 	msg := publisher.Message("text/plan", []byte(manager.Name))
 	publisher.Publish(msg)
 }

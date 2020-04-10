@@ -21,7 +21,6 @@ func main() {
 	rabbitServer := messaging.NewRabbitMQServer("guest", "guest", "localhost:5672")
 	rabbitServer.Connect()
 	defer rabbitServer.Close()
-
 	manager := sensors.New(rabbitServer, *name, min, max, stepSize, *freq)
 	manager.PublishNewSensorQueue()
 	manager.Run()

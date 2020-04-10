@@ -14,10 +14,10 @@ type Publisher struct {
 }
 
 // NewPublisherWithQueue returns a new publisher with a declared queue
-func NewPublisherWithQueue(s *Server, queue string) *Publisher {
+func NewPublisherWithQueue(s *Server, queue string, autoDelete bool) *Publisher {
 	ch, err := s.Conn.Channel()
 	FailOnError(err, "Failed to open channel")
-	q, err := ch.QueueDeclare(queue, false, false, false, false, nil)
+	q, err := ch.QueueDeclare(queue, false, autoDelete, false, false, nil)
 	FailOnError(err, "Failed to declare and connect to queue")
 	return &Publisher{
 		Server:       s,
@@ -28,7 +28,7 @@ func NewPublisherWithQueue(s *Server, queue string) *Publisher {
 	}
 }
 
-// NewPublisher returns a publisher struct with the server and queue
+// NewPublisherWithExchange returns a publisher struct with the server and queue
 func NewPublisherWithExchange(s *Server, exchange string) *Publisher {
 	ch, err := s.Conn.Channel()
 	FailOnError(err, "Failed to open channel")
