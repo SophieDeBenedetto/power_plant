@@ -3,6 +3,8 @@ package dto
 import (
 	"encoding/gob"
 	"time"
+
+	"github.com/sophiedebenedetto/power_plant/src/distributed/messaging"
 )
 
 // SensorMessage is a message from a sensor
@@ -14,4 +16,10 @@ type SensorMessage struct {
 
 func init() {
 	gob.Register(SensorMessage{})
+}
+
+// Encode codes the message
+func (message SensorMessage) Encode(writer *messaging.Writer) {
+	writer.Reset()
+	writer.Enc.Encode(message)
 }

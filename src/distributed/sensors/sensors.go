@@ -1,8 +1,6 @@
 package sensors
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"log"
 	"strconv"
@@ -39,8 +37,7 @@ func (manager *SensorManager) PublishNewSensorQueue() {
 	publisher := messaging.NewPublisherWithQueue(manager.Server, SensorList, true)
 	defer publisher.Stop()
 	fmt.Println("Publishing message: ", manager.Name)
-	msg := publisher.Message("text/plan", []byte(manager.Name))
-	publisher.Publish(msg)
+	publisher.Publish([]byte(manager.Name))
 }
 
 // Run takes sensor readings and publishes them
@@ -49,14 +46,18 @@ func (manager *SensorManager) Run() {
 	defer sensorPublisher.Stop()
 
 	pace := setPace(&manager.Frequency)
-	buf, enc := setUpBuffer()
+	sensorPublisher.SetUpWriter()
 
 	var value float64
 	for range pace {
 		value = manager.Calculator.Calculate(value)
-		writeMessageToBuffer(manager.Name, value, buf, enc)
-		amqpMsg := sensorPublisher.Message("text/plain", buf.Bytes())
-		sensorPublisher.Publish(amqpMsg)
+		msg := dto.SensorMessage{
+			Name:      manager.Name,
+			Value:     value,
+			Timestamp: time.Now(),
+		}
+		sensorPublisher.WriteMessageToBuffer(msg)
+		sensorPublisher.Publish(sensorPublisher.MessageBytes())
 		log.Printf("Reading sent. Value: %v", value)
 	}
 }
@@ -64,21 +65,4 @@ func (manager *SensorManager) Run() {
 func setPace(freq *uint) <-chan time.Time {
 	dur, _ := time.ParseDuration(strconv.Itoa(1000/int(*freq)) + "ms")
 	return time.Tick(dur)
-}
-
-func setUpBuffer() (*bytes.Buffer, *gob.Encoder) {
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	return buf, enc
-}
-
-func writeMessageToBuffer(name string, value float64, buf *bytes.Buffer, enc *gob.Encoder) {
-	reading := dto.SensorMessage{
-		Name:      name,
-		Value:     value,
-		Timestamp: time.Now(),
-	}
-	buf.Reset()
-	enc = gob.NewEncoder(buf)
-	enc.Encode(reading)
 }

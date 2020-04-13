@@ -10,7 +10,7 @@ func main() {
 	rabbitServer.Connect()
 	defer rabbitServer.Close()
 
-	dbEventRaiser := coordinator.NewDatabaseEventRaiser()
+	dbEventRaiser := coordinator.NewDatabaseEventRaiser(rabbitServer)
 
 	coord := coordinator.New(rabbitServer, dbEventRaiser.EventRaiser)
 	coord.Run()
