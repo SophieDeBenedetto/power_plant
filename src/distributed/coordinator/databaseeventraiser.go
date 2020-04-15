@@ -62,7 +62,7 @@ func (dbEventRaiser *DatabaseEventRaiser) handleMessageReceived() func(interface
 			dbEventRaiser.publisher.SetUpWriter()
 			dbEventRaiser.publisher.WriteMessageToBuffer(msg)
 			fmt.Println("PUBLISHING PERSISTENCE MSG...")
-			// dbEventRaiser.publisher.Publish(dbEventRaiser.publisher.MessageBytes)
+			dbEventRaiser.publisher.Publish(dbEventRaiser.publisher.MessageBytes())
 		}
 	}
 }
