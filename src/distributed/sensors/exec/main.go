@@ -9,7 +9,7 @@ import (
 	"github.com/sophiedebenedetto/power_plant/src/distributed/sensors"
 )
 
-var name = flag.String("name", "sensor", "name of sensor")
+var name = flag.String("name", "boiler_pressure_out", "name of sensor")
 var freq = flag.Uint("freq", 5, "update frequency in cycle/seconds")
 var max = flag.Float64("max", 5.0, "maximum value for generated readings")
 var min = flag.Float64("min", 1.0, "minimum value for generated readings")
