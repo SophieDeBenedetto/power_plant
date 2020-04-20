@@ -43,12 +43,26 @@ func (c *Consumer) QueueBind(key string, exchange string) {
 }
 
 // Consume starts listening for messages from a queue
-func (c *Consumer) Consume() {
-	msgs, err := c.Channel.Consume(c.Queue.Name, "", true, false, false, false, nil)
+func (c *Consumer) Consume(autoAck bool, exclusive bool) {
+	msgs, err := c.Channel.Consume(c.Queue.Name, "", autoAck, exclusive, false, false, nil)
 	FailOnError(err, "Failed to start consumer")
 	for msg := range msgs {
 		c.Handler.Handle(msg)
 	}
+}
+
+// ExchangeDeclare declares the exchange
+func (c *Consumer) ExchangeDeclare(exchange string) {
+	err := c.Channel.ExchangeDeclare(
+		exchange, // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	FailOnError(err, "Failed to declare exchange")
 }
 
 // Stop closes the channel connection

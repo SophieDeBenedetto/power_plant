@@ -1,4 +1,4 @@
-package coordinator
+package datamanager
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// NewPersistenceHandler persists the message
 func NewPersistenceHandler() *PersistenceHandler {
 	return &PersistenceHandler{}
 }
@@ -27,5 +28,12 @@ func (ph *PersistenceHandler) Handle(msg amqp.Delivery) {
 		fmt.Println(fmt.Errorf("Error decoding: %v", err))
 	}
 
-	fmt.Printf("PERSISTING MESSAGE: %v\n", sensorData)
+	fmt.Printf("Persisting message: %v\n", sensorData)
+	err = SaveReading(sensorData)
+	if err != nil {
+		fmt.Printf("Failed to save message: %v, with error: ", sensorData, err)
+
+	} else {
+		msg.Ack(false)
+	}
 }

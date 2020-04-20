@@ -28,6 +28,7 @@ func SaveReading(reading *dto.SensorMessage) error {
 	if err != nil {
 		return errors.New("Unalbe to persist reading for sensor " + reading.Name)
 	}
+	return nil
 }
 
 func getSensors() {

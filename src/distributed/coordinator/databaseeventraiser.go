@@ -1,9 +1,9 @@
 package coordinator
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/sophiedebenedetto/power_plant/src/distributed/dto"
 	"github.com/sophiedebenedetto/power_plant/src/distributed/messaging"
 )
@@ -33,7 +33,7 @@ func NewDatabaseEventRaiser(rabbitServer *messaging.Server) *DatabaseEventRaiser
 }
 
 func (dbEventRaiser *DatabaseEventRaiser) handleDataSourceDiscovered(eventName interface{}) {
-	fmt.Println("Handling data source discovered in DB event raiser")
+	logrus.WithField("service", "db").Info("Handling data source discovered in DB event raiser")
 	name, _ := eventName.(string)
 	name = string(name)
 	for _, source := range dbEventRaiser.sources {
@@ -41,7 +41,7 @@ func (dbEventRaiser *DatabaseEventRaiser) handleDataSourceDiscovered(eventName i
 			return
 		}
 	}
-	fmt.Println("Adding message received listener")
+	logrus.WithField("service", "db").Info("Adding message received listener")
 	dbEventRaiser.sources = append(dbEventRaiser.sources, name)
 	dbEventRaiser.EventRaiser.AddListener("MessageReceived_"+name, dbEventRaiser.handleMessageReceived())
 }
@@ -49,8 +49,8 @@ func (dbEventRaiser *DatabaseEventRaiser) handleDataSourceDiscovered(eventName i
 func (dbEventRaiser *DatabaseEventRaiser) handleMessageReceived() func(interface{}) {
 	prevTime := time.Unix(0, 0)
 	return func(event interface{}) {
-		fmt.Println("Handling message received in DB event raiser")
-		fmt.Println(event)
+		logrus.WithField("service", "db").Info("Handling message received in DB event raiser")
+		logrus.WithField("service", "db").Info(event)
 		ed := event.(EventData)
 		if time.Since(prevTime) > maxRate {
 			prevTime = time.Now()
@@ -61,7 +61,7 @@ func (dbEventRaiser *DatabaseEventRaiser) handleMessageReceived() func(interface
 			}
 			dbEventRaiser.publisher.SetUpWriter()
 			dbEventRaiser.publisher.WriteMessageToBuffer(msg)
-			fmt.Println("PUBLISHING PERSISTENCE MSG...")
+			logrus.WithField("service", "db").Info("PUBLISHING PERSISTENCE MSG...")
 			dbEventRaiser.publisher.Publish(dbEventRaiser.publisher.MessageBytes())
 		}
 	}

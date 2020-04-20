@@ -1,6 +1,8 @@
 package coordinator
 
 import (
+	"fmt"
+
 	"github.com/sophiedebenedetto/power_plant/src/distributed/messaging"
 	"github.com/sophiedebenedetto/power_plant/src/distributed/sensors"
 )
@@ -22,13 +24,16 @@ func New(server *messaging.Server, er EventRaiser) *Coordinator {
 }
 
 // Run runs the coordinator
-func (c *Coordinator) Run() {
+func (c *Coordinator) Run(queue string) {
 	handler := &SensorListMessageHandler{
 		coord:       c,
 		eventRaiser: c.EventRaiser,
 	}
-	newSensorConsumer := messaging.NewConsumer(c.Server, sensors.SensorList, true, handler)
-	newSensorConsumer.Consume()
+	newSensorConsumer := messaging.NewConsumer(c.Server, queue, true, handler)
+	fmt.Println("Consuming sensor_list...")
+	newSensorConsumer.ExchangeDeclare(sensors.SensorList)
+	newSensorConsumer.QueueBind("", sensors.SensorList)
+	newSensorConsumer.Consume(true, false)
 }
 
 // QueueIsRegistered returns true if the queue is registered

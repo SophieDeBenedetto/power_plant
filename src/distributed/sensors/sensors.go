@@ -34,7 +34,7 @@ func New(server *messaging.Server, name string, max *float64, min *float64, step
 
 // PublishNewSensorQueue publishes the 'new sensor online' message
 func (manager *SensorManager) PublishNewSensorQueue() {
-	publisher := messaging.NewPublisherWithQueue(manager.Server, SensorList, true)
+	publisher := messaging.NewPublisherWithExchange(manager.Server, SensorList)
 	defer publisher.Stop()
 	fmt.Println("Publishing message: ", manager.Name)
 	publisher.Publish([]byte(manager.Name))

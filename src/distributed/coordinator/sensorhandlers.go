@@ -33,7 +33,7 @@ func (h *SensorListMessageHandler) Handle(msg amqp.Delivery) {
 		sensorConsumer := messaging.NewConsumer(h.coord.Server, sensorQueueName, false, sensorDataHandler)
 		sensorConsumer.QueueBind("", "amq.fanout")
 		h.coord.RegisterQueue(sensorQueueName, sensorConsumer)
-		go sensorConsumer.Consume()
+		go sensorConsumer.Consume(true, false)
 	}
 }
 

@@ -2,6 +2,9 @@ package datamanager
 
 import (
 	"database/sql"
+
+	// postgres driver
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
