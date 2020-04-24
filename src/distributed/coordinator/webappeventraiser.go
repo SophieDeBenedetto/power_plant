@@ -30,6 +30,7 @@ func NewWebAppEventRaiser(rabbitServer *messaging.Server) *WebAppEventRaiser {
 		sensorReadingPublisher: messaging.NewPublisherWithExchange(rabbitServer, SensorReadingExchange),
 	}
 	webAppEventRaiser.EventRaiser.AddListener("DataSourceDiscovered", webAppEventRaiser.handleDataSourceDiscovered)
+	webAppEventRaiser.EventRaiser.AddListener("WebAppDiscoveryRequest", webAppEventRaiser.handleWebAppDiscovery)
 	return webAppEventRaiser
 }
 
@@ -44,7 +45,7 @@ func (webAppEventRaiser *WebAppEventRaiser) handleDataSourceDiscovered(eventName
 	}
 	logrus.WithField("service", "web").Info("Adding message received listener")
 	webAppEventRaiser.sources = append(webAppEventRaiser.sources, name)
-	webAppEventRaiser.sensorPublisher.Publish([]byte(name))
+	webAppEventRaiser.sensorPublisher.Publish([]byte(name)) // publish new sensor name to WebAppSensors
 	webAppEventRaiser.EventRaiser.AddListener("MessageReceived_"+name, webAppEventRaiser.handleMessageReceived)
 }
 
@@ -59,5 +60,13 @@ func (webAppEventRaiser *WebAppEventRaiser) handleMessageReceived(event interfac
 	webAppEventRaiser.sensorReadingPublisher.SetUpWriter()
 	webAppEventRaiser.sensorReadingPublisher.WriteMessageToBuffer(msg)
 	logrus.WithField("service", "web").Info("Publishing web app message...")
+	// publish sensor reading to WebAppSensorReadings
 	webAppEventRaiser.sensorReadingPublisher.Publish(webAppEventRaiser.sensorReadingPublisher.MessageBytes())
+}
+
+func (webAppEventRaiser *WebAppEventRaiser) handleWebAppDiscovery(event interface{}) {
+	logrus.WithField("service", "web").Info("Handling web app discovery message received in web app event raiser")
+	for _, source := range webAppEventRaiser.sources {
+		webAppEventRaiser.sensorPublisher.Publish([]byte(source))
+	}
 }
