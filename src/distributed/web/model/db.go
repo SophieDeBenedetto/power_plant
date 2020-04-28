@@ -1,4 +1,4 @@
-package datamanager
+package model
 
 import (
 	"database/sql"

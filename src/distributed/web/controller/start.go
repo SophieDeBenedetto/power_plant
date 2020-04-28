@@ -1,15 +1,20 @@
 package controller
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/sophiedebenedetto/power_plant/src/distributed/messaging"
+)
 
 // Initialize registers the routes and file servers
-func Initialize() {
-	registerRoutes()
+func Initialize(rabbitServer *messaging.Server) {
+	registerRoutes(rabbitServer)
 	registerFileServers()
 }
 
-func registerRoutes() {
-
+func registerRoutes(rabbitServer *messaging.Server) {
+	ws := NewWebsocketController(rabbitServer)
+	http.HandleFunc("/ws", ws.handleMessage)
 }
 
 func registerFileServers() {

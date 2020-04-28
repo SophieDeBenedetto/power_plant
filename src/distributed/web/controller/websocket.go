@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sophiedebenedetto/power_plant/src/distributed/coordinator"
 	"github.com/sophiedebenedetto/power_plant/src/distributed/messaging"
+	"github.com/sophiedebenedetto/power_plant/src/distributed/web/webconsumer"
 )
 
 type message struct {
@@ -23,16 +24,19 @@ type WebsocketController struct {
 }
 
 // NewWebsocketController returns a new WS controller
-func NewWebsocketController() *WebsocketController {
-	server := messaging.NewRabbitMQServer("guest", "guest", "localhost:5672")
+func NewWebsocketController(rabbitServer *messaging.Server) *WebsocketController {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	return &WebsocketController{
-		rabbitServer: server,
+	wsc := &WebsocketController{
+		rabbitServer: rabbitServer,
 		upgrader:     upgrader,
 	}
+
+	go wsc.listenForSources()
+	go wsc.listenForReadings()
+	return wsc
 }
 
 func (wsc *WebsocketController) handleMessage(w http.ResponseWriter, r *http.Request) {
@@ -75,10 +79,28 @@ func (wsc *WebsocketController) listenForDiscoveryRequests(socket *websocket.Con
 
 // Consume sensor name messages from SensorExchange
 func (wsc *WebsocketController) listenForSources() {
-
+	handler := NewSensorHandler(wsc)
+	consumer := webconsumer.NewWebConsumer(wsc.rabbitServer, "WebAppSensorExchangeQueue", coordinator.SensorExchange, handler)
+	consumer.Run()
 }
 
 // Consume sensor reading messages from SensorReadingExchange
 func (wsc *WebsocketController) listenForReadings() {
+	handler := NewSensorHandler(wsc)
+	consumer := webconsumer.NewWebConsumer(wsc.rabbitServer, "WebAppSensorReadingExchangeQueue", coordinator.SensorReadingExchange, handler)
+	consumer.Run()
+}
 
+// SendMessage sends a message to the client
+func (wsc *WebsocketController) SendMessage(msg message) {
+	socketsToRemove := []*websocket.Conn{}
+	for _, socket := range wsc.sockets {
+		err := socket.WriteJSON(msg)
+		if err != nil {
+			socketsToRemove = append(socketsToRemove, socket)
+		}
+	}
+	for _, socket := range socketsToRemove {
+		wsc.removeSocket(socket)
+	}
 }
